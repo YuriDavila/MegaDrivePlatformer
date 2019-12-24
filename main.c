@@ -47,8 +47,6 @@ u16 currentFrame = 0;
 int direction = 0;
 
 //Ground Collision
-u16 groundX = 7;
-u16 groundY = 2;
 int groundColX[8] = {000, 408, 438, 504, 534, 695, 760, 959};
 int groundColY[8] = {168, 168, 183, 183, 183, 168, 224, 168};
 u16 groundColPoints = 8;
@@ -155,8 +153,6 @@ void playerGravity()
 {
 	// //Apply Velocity, need to use fix16Add to add two "floats" together
 	playerPosY = fix16Add(playerPosY, playerVelY);
-	// //Set the position of the player by converting the "float"/fix16 back to an int
-	//SPR_setPosition(player, fix32ToInt(playerPosX), testGroundCollision(0) - playerHeight);
 
 	//Apply gravity
 	if (jumping == TRUE)
@@ -186,7 +182,6 @@ int testGroundCollision(int pos)
 			return groundColY[i];
 		}
 	}
-
 	return 0;
 }
 
@@ -214,11 +209,7 @@ int checkSlope()
 				}
 				
 			}	
-		}else
-		{
-			//VDP_drawTextBG(PLAN_B, "You are not at an edge", 16, 2);
 		}
-		
 	}
 	return 0;
 }
