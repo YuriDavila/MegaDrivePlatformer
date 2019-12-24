@@ -49,34 +49,24 @@ int direction = 0;
 //Ground Collision
 u16 groundX = 7;
 u16 groundY = 2;
-int groundColX[8] = {0,  408,  438,  504,  534,  695,  760, 959};
+int groundColX[8] = {000, 408, 438, 504, 534, 695, 760, 959};
 int groundColY[8] = {168, 168, 183, 183, 183, 168, 224, 168};
 u16 groundColPoints = 8;
 
 void updateDebug()
 {
-	int debugpos = xPos + fix32ToInt(playerPosX) + playerWidth;
-	sprintf(strPosX, "%d", debugpos);
-	sprintf(str_x1, "%d", groundColX[0]);
-	sprintf(str_x2, "%d", groundColX[1]);
-	sprintf(strPosY, "%d", testGroundCollision(0));
-	sprintf(str_y1, "%d", groundColY[0]);
-	sprintf(str_y2, "%d", groundColY[1]);
-	//Clear the score from screen
-	VDP_clearTextBG(PLAN_B, 16, 2, 4);
-	VDP_clearTextBG(PLAN_B, 16, 3, 4);
-	VDP_clearTextBG(PLAN_B, 16, 4, 4);
+	
+	int angleX = groundColX[2] - groundColX[1];
+	int angleY = groundColY[2] - groundColY[1];
+	fix16 slope = fix16Div(intToFix16(angleY), intToFix16(angleX));
+	sprintf(strPosY, "%d", FIX16(1));
+	sprintf(str_y1, "%d", angleY);
+	sprintf(str_y2, "%d", angleX);
+	
 	VDP_clearTextBG(PLAN_B, 16, 6, 4);
 	VDP_clearTextBG(PLAN_B, 16, 8, 4);
 	VDP_clearTextBG(PLAN_B, 16, 10, 4);
 
-	//Draw the updated score on screen
-	VDP_drawTextBG(PLAN_B, "xPos:", 0, 2);
-	VDP_drawTextBG(PLAN_B, strPosX, 16, 2);
-	VDP_drawTextBG(PLAN_B, "X1:", 0, 3);
-	VDP_drawTextBG(PLAN_B, str_x1, 16, 3);
-	VDP_drawTextBG(PLAN_B, "X2:", 0, 4);
-	VDP_drawTextBG(PLAN_B, str_x2, 16, 4);
 	VDP_drawTextBG(PLAN_B, "yPos:", 0, 6);
 	VDP_drawTextBG(PLAN_B, strPosY, 16, 6);
 	VDP_drawTextBG(PLAN_B, "Y1:", 0, 8);
@@ -109,8 +99,10 @@ int main()
 		SPR_update();
 		VDP_waitVSync();
 		updateDebug();
+		checkSlope();
 	}
 	return(0);
+	
 }
 
 void init()
@@ -187,8 +179,6 @@ void playerGravity()
 
 int testGroundCollision(int pos)
 {
-	//"static" flat AABB col detection
-	//Array for "angled" AABB colliders, the array is the x length, with each value being the decresing / increasing y height.
 	for (int i = 0; i < groundColPoints; i++)
 	{
 		if (xPos + playerWidth + fix32ToInt(playerPosX) < groundColX[i])
@@ -198,6 +188,52 @@ int testGroundCollision(int pos)
 	}
 
 	return 0;
+}
+
+int checkSlope()
+{
+	for (int i = 0; i < groundColPoints; i++)
+	{
+		if (xPos + playerWidth + fix32ToInt(playerPosX) >= groundColX[i])
+		{
+			char debug1[18];
+			sprintf(debug1, "you are at edge %d", i);
+			VDP_drawTextBG(PLAN_B, debug1, 16, 2);
+			if(i>1 && i < groundColPoints)
+			{
+				if(direction != 0)
+				{
+					if(calcSlope(i, i+direction) == 0)
+					{
+						VDP_drawTextBG(PLAN_B, "nope", 16, 4);
+					}else
+					{
+
+						VDP_drawTextBG(PLAN_B, "yup ", 16, 4);
+					}
+				}
+				
+			}	
+		}else
+		{
+			//VDP_drawTextBG(PLAN_B, "You are not at an edge", 16, 2);
+		}
+		
+	}
+	return 0;
+}
+
+int calcSlope(int point1, int point2)
+{
+	int angleX = groundColX[point2] - groundColX[point1];
+	int angleY = groundColY[point2] - groundColY[point1];
+	fix16 slope = fix16Div(intToFix16(angleY), intToFix16(angleX));
+
+	if(slope > 32)
+	{
+		return 0;
+	}
+	return 1;
 }
 
 void playerMovement()
@@ -228,7 +264,6 @@ void playerMovement()
 		SPR_setHFlip(player, TRUE);
 	}
 
-	//SHANE FIX
 	if (fix32ToInt(playerVelX) == 0 && jumping == FALSE)
 	{
 		SPR_setAnim(player, ANIM_IDLE);
